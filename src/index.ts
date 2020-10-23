@@ -73,12 +73,12 @@ const main = async () => {
                     stderr(`Skipping duplicate entry for ${key}`);
                 } else {
                     const str =
-                        `Warning: Found duplicate keys with different values:\n` +
+                        `Found duplicate keys with different values:\n` +
                         `Key: ${key}\n` +
                         `Value 1: ${allItems[key].value}\n` +
                         `Value 2: ${item.value} (in file ${path})`;
                     if (!ignoreErrors) throw new Error(str);
-                    else stderr(str);
+                    else stderr(`Warning: ${str}`);
                 }
             } else {
                 allItems[key] = item;
