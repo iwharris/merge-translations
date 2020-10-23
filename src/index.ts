@@ -24,6 +24,7 @@ const parseArgs = (args: string[]) => {
     return commander
         .description('Merge multiple translation files into one')
         .usage('<file-pattern>')
+        .option('--ignore-errors', 'Ignore errors when loading and parsing files')
         .parse(args);
 };
 
@@ -42,23 +43,28 @@ const expandGlobPatterns = async (patterns: string[]): Promise<string[]> => {
     return Array.from(fileSet);
 };
 
-const loadAndParse = async (path: string): Promise<TranslationObject> => {
+const loadAndParse = async (path: string, ignoreErrors: boolean): Promise<TranslationObject> => {
     return fs
         .readFile(path)
         .then((buffer) => JSON.parse(buffer.toString()))
         .catch((err) => {
-            stderr(`Couldn't load JSON from ${path}: ${err.message}`);
+            const str = `Couldn't load JSON from ${path}: ${err.message}`;
+
+            if (!ignoreErrors) throw new Error(str);
+            else stderr(`Warning: ${str}`);
         });
 };
 
 const main = async () => {
     const program = parseArgs(process.argv);
 
+    const { ignoreErrors } = program;
+
     const paths: string[] = await expandGlobPatterns(program.args);
 
     const allItems: Record<string, TranslatableItem> = {};
     for (const path of paths) {
-        const parsed = await loadAndParse(path);
+        const parsed = await loadAndParse(path, ignoreErrors);
         const items = parsed?.translations || [];
         for (const item of items) {
             const { key } = item;
@@ -66,7 +72,13 @@ const main = async () => {
                 if (allItems[key].value === item.value) {
                     stderr(`Skipping duplicate entry for ${key}`);
                 } else {
-                    stderr(`Warning: Found duplicate keys with different values:\n  `);
+                    const str =
+                        `Warning: Found duplicate keys with different values:\n` +
+                        `Key: ${key}\n` +
+                        `Value 1: ${allItems[key].value}\n` +
+                        `Value 2: ${item.value} (in file ${path})`;
+                    if (!ignoreErrors) throw new Error(str);
+                    else stderr(str);
                 }
             } else {
                 allItems[key] = item;
