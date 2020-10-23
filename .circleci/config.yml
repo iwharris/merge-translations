@@ -63,5 +63,5 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-            context:
-             - npm-public
+          context:
+            - npm-public
