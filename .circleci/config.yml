@@ -63,3 +63,4 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
+            context: "npm publish"
