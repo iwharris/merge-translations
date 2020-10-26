@@ -20,9 +20,8 @@ const stderr = (msg: string) => process.stderr.write(`${msg}\n`);
 
 const asyncGlob = util.promisify(glob);
 
-const parseArgs = (args: string[], version: string) =>
+const parseArgs = (args: string[]) =>
     commander
-        .version(version)
         .description('Merge multiple translation files into one')
         .usage('<file-pattern>')
         .option('--ignore-errors', 'Ignore errors when loading and parsing files')
@@ -60,9 +59,7 @@ const sortTranslations = (translations: TranslationItem[]): TranslationItem[] =>
     translations.sort((a, b) => a.key.localeCompare(b.key));
 
 const main = async () => {
-    const { version } = await import('../package.json');
-
-    const program = parseArgs(process.argv, version);
+    const program = parseArgs(process.argv);
 
     const { ignoreErrors, sort } = program;
 
