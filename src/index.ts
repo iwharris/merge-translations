@@ -26,6 +26,7 @@ const parseArgs = (args: string[]) =>
         .usage('<file-pattern>')
         .option('--ignore-errors', 'Ignore errors when loading and parsing files')
         .option('--no-sort', 'Do not sort translation strings by their keys')
+        .option('--no-merge-context', 'Do not try to grab contexts from duplicate keys')
         .parse(args);
 
 /**
@@ -61,7 +62,7 @@ const sortTranslations = (translations: TranslationItem[]): TranslationItem[] =>
 const main = async () => {
     const program = parseArgs(process.argv);
 
-    const { ignoreErrors, sort } = program;
+    const { ignoreErrors, sort, mergeContext } = program;
 
     const paths: string[] = await expandGlobPatterns(program.args);
 
@@ -73,7 +74,12 @@ const main = async () => {
             const { key } = item;
             if (allItems[key]) {
                 if (allItems[key].value === item.value) {
-                    stderr(`Skipping duplicate entry for ${key}`);
+                    if (mergeContext && !allItems[key].context && item.context) {
+                        allItems[key].context = item.context;
+                        stderr(`Pulled context from duplicate entry into ${key}: ${item.context}`);
+                    } else {
+                        stderr(`Skipping duplicate entry for ${key}`);
+                    }
                 } else {
                     const str =
                         `Found duplicate keys with different values:\n` +
