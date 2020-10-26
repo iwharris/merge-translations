@@ -20,14 +20,14 @@ const stderr = (msg: string) => process.stderr.write(`${msg}\n`);
 
 const asyncGlob = util.promisify(glob);
 
-const parseArgs = (args: string[]) => {
-    return commander
+const parseArgs = (args: string[], version: string) =>
+    commander
         .version(version)
         .description('Merge multiple translation files into one')
         .usage('<file-pattern>')
         .option('--ignore-errors', 'Ignore errors when loading and parsing files')
+        .option('--no-sort', 'Do not sort translation strings by their keys')
         .parse(args);
-};
 
 /**
  * Expands all glob patterns and returns a flat list of file paths with duplicates removed.
@@ -56,11 +56,15 @@ const loadAndParse = async (path: string, ignoreErrors: boolean): Promise<Transl
         });
 };
 
+const sortTranslations = (translations: TranslationItem[]): TranslationItem[] =>
+    translations.sort((a, b) => a.key.localeCompare(b.key));
+
 const main = async () => {
     const { version } = await import('../package.json');
 
-    const { ignoreErrors } = program;
     const program = parseArgs(process.argv, version);
+
+    const { ignoreErrors, sort } = program;
 
     const paths: string[] = await expandGlobPatterns(program.args);
 
@@ -88,9 +92,12 @@ const main = async () => {
         }
     }
 
+    // Omit sorting if flag is provided
+    const translations = sort ? sortTranslations(Object.values(allItems)) : Object.values(allItems);
+
     const finalObject: TranslationObject = {
         language: 'EN',
-        translations: Object.values(allItems),
+        translations,
     };
 
     stdout(JSON.stringify(finalObject, null, 2));
