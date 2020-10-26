@@ -22,6 +22,7 @@ const asyncGlob = util.promisify(glob);
 
 const parseArgs = (args: string[]) => {
     return commander
+        .version(version)
         .description('Merge multiple translation files into one')
         .usage('<file-pattern>')
         .option('--ignore-errors', 'Ignore errors when loading and parsing files')
@@ -56,9 +57,10 @@ const loadAndParse = async (path: string, ignoreErrors: boolean): Promise<Transl
 };
 
 const main = async () => {
-    const program = parseArgs(process.argv);
+    const { version } = await import('../package.json');
 
     const { ignoreErrors } = program;
+    const program = parseArgs(process.argv, version);
 
     const paths: string[] = await expandGlobPatterns(program.args);
 
