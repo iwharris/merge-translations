@@ -9,7 +9,8 @@
   "scripts": {
     "compile": "tsc",
     "prettier": "prettier --check {src,test}/**/*.[jt]s",
-    "prettier:fix": "prettier --write {src,test}/**/*.[jt]s"
+    "prettier:fix": "prettier --write {src,test}/**/*.[jt]s",
+    "relink": "npm run -s compile && npm -s unlink && npm link"
   },
   "author": "",
   "license": "ISC",
