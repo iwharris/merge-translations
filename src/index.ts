@@ -3,7 +3,7 @@ import util from 'util';
 import glob from 'glob';
 import { promises as fs } from 'fs';
 
-interface TranslatableItem {
+interface TranslationItem {
     /** Unique hash that identifies the key */
     key: string;
     value: string;
@@ -13,7 +13,7 @@ interface TranslatableItem {
 interface TranslationObject {
     /** eg. "EN" */
     language: string;
-    translations: TranslatableItem[];
+    translations: TranslationItem[];
 }
 const stdout = (msg: string) => process.stdout.write(`${msg}\n`);
 const stderr = (msg: string) => process.stderr.write(`${msg}\n`);
@@ -62,7 +62,7 @@ const main = async () => {
 
     const paths: string[] = await expandGlobPatterns(program.args);
 
-    const allItems: Record<string, TranslatableItem> = {};
+    const allItems: Record<string, TranslationItem> = {};
     for (const path of paths) {
         const parsed = await loadAndParse(path, ignoreErrors);
         const items = parsed?.translations || [];
