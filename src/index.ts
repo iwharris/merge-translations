@@ -2,6 +2,7 @@ import commander from 'commander';
 import util from 'util';
 import glob from 'glob';
 import { promises as fs } from 'fs';
+import md5 from 'md5';
 
 interface TranslationItem {
     /** Unique hash that identifies the key */
@@ -27,6 +28,7 @@ const parseArgs = (args: string[]) =>
         .option('--ignore-errors', 'Ignore errors when loading and parsing files')
         .option('--no-sort', 'Do not sort translation strings by their keys')
         .option('--no-merge-context', 'Do not try to grab contexts from duplicate keys')
+        .option('--no-md5-check', 'Do not compare keys with md5 hashes of the strings')
         .parse(args);
 
 /**
@@ -62,7 +64,7 @@ const sortTranslations = (translations: TranslationItem[]): TranslationItem[] =>
 const main = async () => {
     const program = parseArgs(process.argv);
 
-    const { ignoreErrors, sort, mergeContext } = program;
+    const { ignoreErrors, sort, mergeContext, md5Check } = program;
 
     const paths: string[] = await expandGlobPatterns(program.args);
 
@@ -97,6 +99,17 @@ const main = async () => {
 
     // Omit sorting if flag is provided
     const translations = sort ? sortTranslations(Object.values(allItems)) : Object.values(allItems);
+
+    if (md5Check) {
+        translations.forEach((translation) => {
+            if (translation.key !== md5(translation.value)) {
+                stderr(
+                    `Hash mismatch: string "${translation.value}" should have key ` +
+                        `"${md5(translation.value)}" but actually has "${translation.key}"`
+                );
+            }
+        });
+    }
 
     const finalObject: TranslationObject = {
         language: 'EN',
